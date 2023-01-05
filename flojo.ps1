@@ -186,37 +186,63 @@ cmd.exe /c "reg add `"HKCU\Control Panel\Bluetooth`" /v `"Notification Area Icon
 # Privacy Settings
 ##################
 
+Write-Host "Aplicando cambios de privacidad" -ForegroundColor Green
+Write-Host "------------------------------------" -ForegroundColor Green
+
+Write-Host "desactivar ID de publicidad" -ForegroundColor Green
 # Privacy: Let apps use my advertising ID: Disable
 Set-ItemProperty -Path HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\AdvertisingInfo -Name Enabled -Type DWord -Value 0
 
-# Privacy: SmartScreen Filter for Store Apps: Disable
-Set-ItemProperty -Path HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppHost -Name EnableWebContentEvaluation -Type DWord -Value 0
-
+Write-Host "Desactivar tracking de actividad" -ForegroundColor Green
 # Activity Tracking: Disable
 @('EnableActivityFeed','PublishUserActivities','UploadUserActivities') |% { Set-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\Windows\System -Name $_ -Type DWord -Value 0 }
 
+Write-Host "Desactivar resultados de BING en menu inicio" -ForegroundColor Green
 # Start Menu: Disable Bing Search Results
 Set-ItemProperty -Path HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search -Name BingSearchEnabled -Type DWord -Value 0
 
+Write-Host "Desactivar telemetria" -ForegroundColor Green
 # Disable Telemetry (requires a reboot to take effect)
 Set-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection -Name AllowTelemetry -Type DWord -Value 0
 Get-Service DiagTrack,Dmwappushservice | Stop-Service | Set-Service -StartupType Disabled
 
+
+##################
+# Tweaking
+##################
+
+Write-Host "Aplicando pesonalizaciones" -ForegroundColor Green
+Write-Host "------------------------------------" -ForegroundColor Green
+
+Write-Host "Configurar para abrir explorador en MI PC" -ForegroundColor Green
 # Change Explorer home screen back to "This PC"
 Set-ItemProperty -Path HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced -Name LaunchTo -Type DWord -Value 1
 
+Write-Host "Desactivar fondo para pantalla de bloqueo" -ForegroundColor Green
 # Disable the Lock Screen (the one before password prompt - to prevent dropping the first character)
 If (-Not (Test-Path HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization)) {
 	New-Item -Path HKLM:\SOFTWARE\Policies\Microsoft\Windows -Name Personalization | Out-Null
 }
 Set-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization -Name NoLockScreen -Type DWord -Value 1
 
+##################
+# Red
+##################
+
+Write-Host "Aplicando cambios en la red" -ForegroundColor Green
+Write-Host "------------------------------------" -ForegroundColor Green
+
+Write-Host "Convertir a red privada" -ForegroundColor Green
 # convertir la red a privada
 Set-NetConnectionProfile -InterfaceIndex 1 -NetworkCategory Private
 
+
+Write-Host "Habilitar el descubrimiento en la red" -ForegroundColor Green
 # habilitar el network discovery
 Get-NetFirewallRule -DisplayGroup 'Network Discovery'|Set-NetFirewallRule -Profile 'Private, Domain' -Enabled true
 
+
+Write-Host "Activar compartir sin contraseña" -ForegroundColor Green
 # permitir compartir sin contraseña
 NET USER Guest /ACTIVE:YES
 
@@ -232,7 +258,10 @@ $PATH + " [7]`r`n" + $PATH + "`r`n@ = REG_NONE 4 0x41 0x00 0x00 0x00" >> "C:\fir
 & "regini" "C:\firstrun.regini"
 
 #FINAL-------------------------------
+Write-Host "Pasos finales" -ForegroundColor Green
+Write-Host "------------------------------------" -ForegroundColor Green
 
+Write-Host "Activando todo" -ForegroundColor Green
 start KMS_VL_ALL_AIO.cmd -Wait -NoNewWindow
 
 # -----------------------------------------------------------------------------
