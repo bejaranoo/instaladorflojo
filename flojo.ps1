@@ -75,6 +75,8 @@ $uwpRubbishApps = @(
     "Microsoft.PowerAutomateDesktop"
     "Microsoft.BingWeather"
     "Microsoft.BingNews"
+    "Microsoft.BingSports"
+    "Microsoft.BingFinance"
     "king.com.CandyCrushSaga"
     "Microsoft.Messaging"
     "Microsoft.WindowsFeedbackHub"
@@ -87,9 +89,24 @@ $uwpRubbishApps = @(
     "MicrosoftTeams"
     "Microsoft.Getstarted"
     "Microsoft.Microsoft3DViewer"
+    "Microsoft.3DBuilder"
     "Microsoft.WindowsMaps"
     "Microsoft.MixedReality.Portal"
-    "Microsoft.SkypeApp")
+    "Microsoft.SkypeApp"
+    "*Autodesk*"
+    "*BubbleWitch*"
+    "Microsoft.CommsPhone"
+    "*Dell*"
+    "*Dropbox*"
+    "*Facebook*"
+    "*Keeper*"
+    "microsoft.windowscommunicationsapps"
+    "Microsoft.WindowsMaps"
+    "Microsoft.OneConnect"
+    "Microsoft.Office.OneNote"
+    "Microsoft.WindowsPhone"
+    "Microsoft.XboxApp"
+    "Microsoft.XboxIdentityProvider")
 
 foreach ($uwp in $uwpRubbishApps) {
     Remove-UWP $uwp
@@ -102,24 +119,6 @@ $namespaceName = "root\cimv2\mdm\dmmap"
 $className = "MDM_EnterpriseModernAppManagement_AppManagement01"
 $wmiObj = Get-WmiObject -Namespace $namespaceName -Class $className
 $result = $wmiObj.UpdateScanMethod()
-# -----------------------------------------------------------------------------
-Write-Host ""
-Write-Host "Installing IIS..." -ForegroundColor Green
-Write-Host "------------------------------------" -ForegroundColor Green
-Enable-WindowsOptionalFeature -Online -FeatureName IIS-DefaultDocument -All
-Enable-WindowsOptionalFeature -Online -FeatureName IIS-HttpCompressionDynamic -All
-Enable-WindowsOptionalFeature -Online -FeatureName IIS-HttpCompressionStatic -All
-Enable-WindowsOptionalFeature -Online -FeatureName IIS-WebSockets -All
-Enable-WindowsOptionalFeature -Online -FeatureName IIS-ApplicationInit -All
-Enable-WindowsOptionalFeature -Online -FeatureName IIS-ASPNET45 -All
-Enable-WindowsOptionalFeature -Online -FeatureName IIS-ServerSideIncludes
-Enable-WindowsOptionalFeature -Online -FeatureName IIS-BasicAuthentication
-Enable-WindowsOptionalFeature -Online -FeatureName IIS-WindowsAuthentication
-# -----------------------------------------------------------------------------
-Write-Host ""
-Write-Host "Enable Windows 10 Developer Mode..." -ForegroundColor Green
-Write-Host "------------------------------------" -ForegroundColor Green
-reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock" /t REG_DWORD /f /v "AllowDevelopmentWithoutDevLicense" /d "1"
 # -----------------------------------------------------------------------------
 Write-Host ""
 Write-Host "Enable Remote Desktop..." -ForegroundColor Green
@@ -141,42 +140,17 @@ else {
 Write-Host ""
 Write-Host "Installing Applications..." -ForegroundColor Green
 Write-Host "------------------------------------" -ForegroundColor Green
-Write-Host "[WARN] Ma de in China: some software like Google Chrome require the true Internet first" -ForegroundColor Yellow
 
 $Apps = @(
     "7zip.install",
-    "git",
     "googlechrome",
     "vlc",
-    "vscode",
-    "sysinternals",
-    "notepadplusplus.install",
-    "linqpad",
-    "postman",
-    "nuget.commandline",
-    "beyondcompare",
-    "filezilla",
-    "microsoft-teams.install",
-    "github-desktop",
-    "irfanview",
-    "nodejs-lts",
-    "azure-cli",
-    "powershell-core",
-    "chocolateygui",
-    "obs-studio")
+    "office365business",
+    "adobereader")
 
 foreach ($app in $Apps) {
     choco install $app -y
 }
-
-# gsudo
-PowerShell -Command "Set-ExecutionPolicy RemoteSigned -scope Process; [Net.ServicePointManager]::SecurityProtocol = 'Tls12'; iwr -useb https://raw.githubusercontent.com/gerardog/gsudo/master/installgsudo.ps1 | iex"
-
-Write-Host "Setting up Git for Windows..." -ForegroundColor Green
-Write-Host "------------------------------------" -ForegroundColor Green
-git config --global user.email "edi.wang@outlook.com"
-git config --global user.name "Edi Wang"
-git config --global core.autocrlf true
 
 
 #aria2
@@ -196,140 +170,70 @@ if ($true)
     Remove-Item -Path "$HOME\aria2.zip" -Force
 }
 
-# Chromium
-if ($true) { 
-    Write-Host "Installing Chromium as backup browser (For second Teams\AAD usage)..." -ForegroundColor Green
-    Write-Host "------------------------------------" -ForegroundColor Green
-    $chromiumUrl = "https://download-chromium.appspot.com/dl/Win_x64?type=snapshots"
-    $chromiumPath = "${env:ProgramFiles}\Chromium"
-    
-    $downloadedChromium = $env:USERPROFILE + "\chrome-win.zip"
-    Remove-Item $downloadedChromium -ErrorAction SilentlyContinue
-    aria2c.exe $chromiumUrl -d $HOME -o "chrome-win.zip"
-    
-    & "${env:ProgramFiles}\7-Zip\7z.exe" x $downloadedChromium "-o$($chromiumPath)" -y
-    
-    $shortCutPath = $env:USERPROFILE + "\Start Menu\Programs" + "\Chromium.lnk"
-    Remove-Item -Path $shortCutPath -Force -ErrorAction SilentlyContinue
-    $objShell = New-Object -ComObject ("WScript.Shell")
-    $objShortCut = $objShell.CreateShortcut($shortCutPath)
-    $objShortCut.TargetPath = "$chromiumPath\chrome-win\Chrome.exe"
-    $objShortCut.Save()
-
-    Remove-Item -Path $downloadedChromium -Force
-}
-
-# Android CLI
-if ($true) {
-    Write-Host "Downloading Android-Platform-Tools (To connect to Android Phone)..." -ForegroundColor Green
-    Write-Host "------------------------------------" -ForegroundColor Green
-    $toolsPath = "${env:ProgramFiles}\Android-Platform-Tools"
-    $downloadUri = "https://dl.google.com/android/repository/platform-tools-latest-windows.zip"
-    
-    $downloadedTool = $env:USERPROFILE + "\platform-tools-latest-windows.zip"
-    Remove-Item $downloadedTool -ErrorAction SilentlyContinue
-    aria2c.exe $downloadUri -d $HOME -o "platform-tools-latest-windows.zip"
-    
-    & ${env:ProgramFiles}\7-Zip\7z.exe x $downloadedTool "-o$($toolsPath)" -y
-    AddToPath -folder "$toolsPath\platform-tools"
-    Remove-Item -Path $downloadedTool -Force
-}
-
-# FFmpeg
-if ($true) {
-    Write-Host "Downloading FFmpeg..." -ForegroundColor Green
-    Write-Host "------------------------------------" -ForegroundColor Green
-    $ffmpegPath = "${env:ProgramFiles}\FFMPEG"
-    $downloadUri = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-git-full.7z"
-    
-    $downloadedFfmpeg = $env:USERPROFILE + "\ffmpeg-git-full.7z"
-    Remove-Item $downloadedFfmpeg -ErrorAction SilentlyContinue
-    aria2c.exe $downloadUri -d $HOME -o "ffmpeg-git-full.7z"
-
-    & ${env:ProgramFiles}\7-Zip\7z.exe x $downloadedFfmpeg "-o$($ffmpegPath)" -y
-    $subPath = $(Get-ChildItem -Path $ffmpegPath | Where-Object { $_.Name -like "ffmpeg*" } | Sort-Object Name -Descending | Select-Object -First 1).Name
-    $subPath = Join-Path -Path $ffmpegPath -ChildPath $subPath
-    $binPath = Join-Path -Path $subPath -ChildPath "bin"
-    Remove-Item $ffmpegPath\*.exe
-    Move-Item $binPath\*.exe $ffmpegPath
-
-    Write-Host "Adding FFmpeg to PATH..." -ForegroundColor Green
-    AddToPath -folder $ffmpegPath
-    Remove-Item -Path $downloadedFfmpeg -Force
-}
-
-# Kubernetes CLI
-if ($true) {
-    Write-Host "Downloading Kubernetes CLI..." -ForegroundColor Green
-    Write-Host "------------------------------------" -ForegroundColor Green
-    $toolsPath = "${env:ProgramFiles}\Kubernetes"
-    $downloadUri = "https://dl.k8s.io/release/v1.25.0/bin/windows/amd64/kubectl.exe"
-    
-    $downloadedTool = $env:USERPROFILE + "\kubectl.exe"
-    Remove-Item $downloadedTool -ErrorAction SilentlyContinue
-    aria2c.exe $downloadUri -d $HOME -o "kubectl.exe"
-    
-    New-Item -Type Directory -Path "${env:ProgramFiles}\Kubernetes" -ErrorAction SilentlyContinue
-    Move-Item $downloadedTool "$toolsPath\kubectl.exe" -Force
-    AddToPath -folder $toolsPath
-}
-
-# wget
-if ($true) {
-    Write-Host "Downloading Wget because some app may need it..." -ForegroundColor Green
-    Write-Host "------------------------------------" -ForegroundColor Green
-    $wgetPath = "${env:ProgramFiles}\wget"
-    $downloadUri = "https://eternallybored.org/misc/wget/releases/wget-1.21.3-win64.zip"
-    $downloadedWget = $env:USERPROFILE + "\wget-1.21.3-win64.zip"
-    Remove-Item $downloadedWget -ErrorAction SilentlyContinue
-    aria2c.exe $downloadUri -d $HOME -o "wget-1.21.3-win64.zip"
-    
-    & ${env:ProgramFiles}\7-Zip\7z.exe x $downloadedWget "-o$($wgetPath)" -y
-    Write-Host "Adding wget to PATH..." -ForegroundColor Green
-    AddToPath -folder $wgetPath
-    Remove-Item -Path $downloadedWget -Force
-}
-
-Write-Host "Setting up dotnet for Windows..." -ForegroundColor Green
-Write-Host "------------------------------------" -ForegroundColor Green
-[Environment]::SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Development", "Machine")
-[Environment]::SetEnvironmentVariable("DOTNET_PRINT_TELEMETRY_MESSAGE", "false", "Machine")
-[Environment]::SetEnvironmentVariable("DOTNET_CLI_TELEMETRY_OPTOUT", "1", "Machine")
-dotnet tool install --global dotnet-ef
-dotnet tool update --global dotnet-ef
-
-Write-Host "Enabling Chinese input method..." -ForegroundColor Green
-Write-Host "------------------------------------" -ForegroundColor Green
-$LanguageList = Get-WinUserLanguageList
-$LanguageList.Add("zh-CN")
-Set-WinUserLanguageList $LanguageList -Force
-
 Write-Host "Applying file explorer settings..." -ForegroundColor Green
 cmd.exe /c "reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced /v HideFileExt /t REG_DWORD /d 0 /f"
 cmd.exe /c "reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced /v AutoCheckSelect /t REG_DWORD /d 0 /f"
 cmd.exe /c "reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced /v LaunchTo /t REG_DWORD /d 1 /f"
 
 Write-Host "Setting Time zone..." -ForegroundColor Green
-Set-TimeZone -Name "China Standard Time"
-
-Write-Host "Excluding repos from Windows Defender..." -ForegroundColor Green
-Add-MpPreference -ExclusionPath "$env:USERPROFILE\source\repos"
-Add-MpPreference -ExclusionPath "$env:USERPROFILE\.nuget"
-Add-MpPreference -ExclusionPath "$env:USERPROFILE\.vscode"
-Add-MpPreference -ExclusionPath "$env:USERPROFILE\.dotnet"
-Add-MpPreference -ExclusionPath "$env:USERPROFILE\.ssh"
-Add-MpPreference -ExclusionPath "$env:APPDATA\npm"
-
-Write-Host "Enabling Hardware-Accelerated GPU Scheduling..." -ForegroundColor Green
-New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers\" -Name 'HwSchMode' -Value '2' -PropertyType DWORD -Force
-
-Write-Host "Installing Github.com/microsoft/artifacts-credprovider..." -ForegroundColor Green
-Write-Host "------------------------------------" -ForegroundColor Green
-iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/microsoft/artifacts-credprovider/master/helpers/installcredprovider.ps1'))
+Set-TimeZone -id "SA Western Standard Time"
 
 Write-Host "Removing Bluetooth icons..." -ForegroundColor Green
 Write-Host "------------------------------------" -ForegroundColor Green
 cmd.exe /c "reg add `"HKCU\Control Panel\Bluetooth`" /v `"Notification Area Icon`" /t REG_DWORD /d 0 /f"
+
+##################
+# Privacy Settings
+##################
+
+# Privacy: Let apps use my advertising ID: Disable
+Set-ItemProperty -Path HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\AdvertisingInfo -Name Enabled -Type DWord -Value 0
+
+# Privacy: SmartScreen Filter for Store Apps: Disable
+Set-ItemProperty -Path HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppHost -Name EnableWebContentEvaluation -Type DWord -Value 0
+
+# Activity Tracking: Disable
+@('EnableActivityFeed','PublishUserActivities','UploadUserActivities') |% { Set-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\Windows\System -Name $_ -Type DWord -Value 0 }
+
+# Start Menu: Disable Bing Search Results
+Set-ItemProperty -Path HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search -Name BingSearchEnabled -Type DWord -Value 0
+
+# Disable Telemetry (requires a reboot to take effect)
+Set-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection -Name AllowTelemetry -Type DWord -Value 0
+Get-Service DiagTrack,Dmwappushservice | Stop-Service | Set-Service -StartupType Disabled
+
+# Change Explorer home screen back to "This PC"
+Set-ItemProperty -Path HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced -Name LaunchTo -Type DWord -Value 1
+
+# Disable the Lock Screen (the one before password prompt - to prevent dropping the first character)
+If (-Not (Test-Path HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization)) {
+	New-Item -Path HKLM:\SOFTWARE\Policies\Microsoft\Windows -Name Personalization | Out-Null
+}
+Set-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization -Name NoLockScreen -Type DWord -Value 1
+
+# convertir la red a privada
+Set-NetConnectionProfile -InterfaceIndex 1 -NetworkCategory Private
+
+# habilitar el network discovery
+Get-NetFirewallRule -DisplayGroup 'Network Discovery'|Set-NetFirewallRule -Profile 'Private, Domain' -Enabled true
+
+# permitir compartir sin contraseña
+NET USER Guest /ACTIVE:YES
+
+# Get guest user id
+$SID = & "wmic" "useraccount" "where" "name='guest'" "get" "sid" "/Value" | Out-String
+$SID = $SID.Trim().Substring(4)
+
+# Generate regini script
+$PATH = "\Registry\Machine\Security\Policy\Accounts\" + $SID + "\ActSysAc"
+$PATH + " [7]`r`n" + $PATH + "`r`n@ = REG_NONE 4 0x41 0x00 0x00 0x00" >> "C:\firstrun.regini"
+
+# Execute regini script
+& "regini" "C:\firstrun.regini"
+
+#FINAL-------------------------------
+
+start KMS_VL_ALL_AIO.cmd -Wait -NoNewWindow
 
 # -----------------------------------------------------------------------------
 Write-Host ""
